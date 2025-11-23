@@ -187,20 +187,25 @@ int solver_user_feedback()
                     valid = false;
                     break;
                 }
+             
+             //Tester position correcte Si une lettre doit être là mais elle ne l’est pas → invalide.
                 if (correct_pos[j][c] && w[j] - 'a' != c)
                 {
                     valid = false;
                     break;
                 }
             }
+
+         // Si invalide → mot rejeté
             if (!valid)
                 continue;
 
             // Vérifier min/max count
             for (int c = 0; c < 26; c++)
-            {
+            //  Une lettre doit apparaître assez / pas trop dans ce mot.
                 if (count_letter[c] < min_count[c] || count_letter[c] > max_count[c])
-                {
+                { 
+                 // Sinon → mot rejeté.
                     valid = false;
                     break;
                 }
@@ -208,35 +213,38 @@ int solver_user_feedback()
             if (!valid)
                 continue;
 
-            // Score = lettres encore inconnues
+            // Score du mot
             int score = 0;
             for (int j = 0; j < WORD_LEN; j++)
             {
                 int c = w[j] - 'a';
                 if (min_count[c] == 0)
-                    score++;
+                  score++; //plus le mot contient de lettres "nouvelles / inconnues", plus il est bon.
             }
-
+                // Garder le meilleur mot
             if (score > best_score)
             {
                 best_score = score;
                 best_idx = i;
             }
         }
-
+         // Aucun mot possible
         if (best_idx < 0)
         {
             printf("Erreur: aucun mot valide restant !\n");
             break;
         }
-
+ 
+         // Choisir ce mot
         const char *guess = dictionary[best_idx];
         used_words[best_idx] = true;
 
+       // Afficher l’essai
         printf("\nEssai %d : %s\n", turn, guess);
         if (turn == 1)
             printf("(Premier mot choisi pour maximiser lettres fréquentes)\n");
 
+        // Lire le feedback utilisateur
         printf("Feedback (g/y/b) : ");
         char fb[WORD_LEN + 1];
         if (scanf("%5s", fb) != 1)
@@ -245,29 +253,37 @@ int solver_user_feedback()
             return 1;
         }
 
+         // Stocker dans l’historique
         strncpy(guesses_history[history_count], guess, WORD_LEN + 1);
         strncpy(feedback_history[history_count], fb, WORD_LEN + 1);
         history_count++;
 
+        // Initialisation pour analyser feedback
         bool win = true;
         int count_guess[26] = {0};
         int g_or_y[26] = {0};
-
+ 
+          // Boucle pour analyser feedback  
         for (int j = 0; j < WORD_LEN; j++)
         {
             char c = tolower(guess[j]);
             count_guess[c - 'a']++;
 
+         // Case verte (correct position)
             if (fb[j] == 'g')
             {
                 correct_pos[j][c - 'a'] = true;
                 g_or_y[c - 'a']++;
             }
+
+             // Case jaune (lettre à mauvaise position)
             else if (fb[j] == 'y')
             {
                 wrong_pos[j][c - 'a'] = true;
                 g_or_y[c - 'a']++;
             }
+
+         // Si pas vert → pas gagné
             if (fb[j] != 'g')
                 win = false;
         }
@@ -281,6 +297,7 @@ int solver_user_feedback()
                 max_count[c] = g_or_y[c];
         }
 
+        // Si gagné
         if (win)
         {
             printf("🎉 Mot trouvé : %s en %d essais\n", guess, turn);
@@ -288,22 +305,27 @@ int solver_user_feedback()
         }
     }
 
+      // Affichage de l’historique
     printf("\n=== HISTORIQUE ===\n");
     for (int i = 0; i < history_count; i++)
         printf("%d) %s -> %s\n", i + 1, guesses_history[i], feedback_history[i]);
     printf("=================\n");
 
-    return 0;
+       return 0;  // fin de solveur logique
 }
 
 /* ---------------- Joueur humain ---------------- */
+
 void human_play()
 {
-    srand((unsigned)time(NULL));
-    int idx = rand() % dict_size;
-    char *target = dictionary[idx];
-    char guess[64];
-
+ //Choisir un mot secret au hasard
+    srand((unsigned)time(NULL));  //initialise le générateur aléatoire.
+    int idx = rand() % dict_size;  //sélectionne un index entre 0 et dict_size-1.
+    char *target = dictionary[idx];  //mot secret = mot choisi.
+ 
+    char guess[64];  //Ici, le programme doit lire un mot tapé par l’utilisateur au clavier. Ce mot doit bien aller quelque part on le met dans un buffer, un buffer est une zone mémoire temporaire où l’on stocke des données avant de les utiliser..
+                     //Déclare un tableau de 64 caractères, c’est-à-dire un espace mémoire où enregistrer jusqu’à 63 lettres. Ce tableau s’appelle guess (ana khiyerto asemo guess t9dri tsemiha kima 7abiti)
+ 
     printf("\nDevinez le mot (%d lettres)\n", WORD_LEN);
     for (int t = 1; t <= MAX_GUESSES; t++)
     {
