@@ -325,24 +325,37 @@ void human_play()
  
     char guess[64];  //Ici, le programme doit lire un mot tapé par l’utilisateur au clavier. Ce mot doit bien aller quelque part on le met dans un buffer, un buffer est une zone mémoire temporaire où l’on stocke des données avant de les utiliser..
                      //Déclare un tableau de 64 caractères, c’est-à-dire un espace mémoire où enregistrer jusqu’à 63 lettres. Ce tableau s’appelle guess (ana khiyerto asemo guess t9dri tsemiha kima 7abiti)
- 
+
+       // Indication pour joueur
     printf("\nDevinez le mot (%d lettres)\n", WORD_LEN);
-    for (int t = 1; t <= MAX_GUESSES; t++)
+
+       // Boucle des 6 essais
+    for (int t = 1; t <= MAX_GUESSES; t++)   // MAX_GUESSES = 6
     {
+     
+     // ch7al men khetra l3abt
         printf("Essai %d> ", t);
+
+     // Lire le mot tapé
         if (scanf("%63s", guess) != 1)
         {
             printf("Erreur lecture\n");
             return;
         }
+
+     // Vérifier longueur = 6
         if ((int)strlen(guess) != WORD_LEN)
         {
             printf("Mot de %d lettres !\n", WORD_LEN);
             t--;
             continue;
         }
+
+     // Convertir le mot en minuscule
         for (int i = 0; i < WORD_LEN; i++)
             guess[i] = tolower((unsigned char)guess[i]);
+
+     // Vérifier si le mot existe dans le dictionnaire
         if (!is_valid_word(guess))
         {
             printf("Mot invalide\n");
