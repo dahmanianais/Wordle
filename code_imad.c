@@ -1,24 +1,36 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdbool.h>
-#include <time.h>
-#include "wordle.h"
+#include <stdio.h>      // printf, scanf
+#include <stdlib.h>     // malloc, free, rand, srand
+#include <string.h>     // strcmp, strlen, strdup…
+#include <ctype.h>      // tolower, toupper
+#include <stdbool.h>    // bool, true, false
+#include <time.h>       // time() pour srand
+#include "wordle.h"     // constantes, struct Color, etc.
 
-char **dictionary = NULL;
-int dict_size = 0;
+//stdio.h : pour afficher sur l’écran, lire clavier.
+//stdlib.h : fonctions mémoire et hasard.
+//string.h : manipulation des chaînes.
+//ctype.h : fonctions sur caractères (maj/min).
+//tdbool.h : type booléen.
+//time.h : initialisation du hasard
+//wordle.h : contient WORD_LEN, MAX_WORDS, enum Color…
+
+char **dictionary = NULL; //dictionary : tableau dynamique de mots → char*
+int dict_size = 0; //dict_size : nombre de mots chargés
 
 /* ---------------- Dictionnaire ---------------- */
 int load_dictionary(const char *filename)
-{
+//Charge les mots depuis le fichier texte
+{ 
+ //Étapes :
+//(1) ouvrir fichier
     FILE *f = fopen(filename, "r");
+    // "r" c'est just read (lire seulment)
     if (!f)
     {
         perror("open dictionary");
         return -1;
     }
-
+//(2) allouer tableau de mots
     dictionary = malloc(sizeof(char *) * MAX_WORDS);
     if (!dictionary)
     {
@@ -28,19 +40,22 @@ int load_dictionary(const char *filename)
 
     char buf[128];
     dict_size = 0;
-
+   // (3) lire ligne par ligne
     while (fgets(buf, sizeof(buf), f))
     {
+       // (4) retirer “\n”
         buf[strcspn(buf, "\r\n")] = 0;
         for (size_t k = 0; k < strlen(buf); k++)
+            //(5) convertir en minuscule
             buf[k] = tolower((unsigned char)buf[k]);
         if ((int)strlen(buf) == WORD_LEN && dict_size < MAX_WORDS)
+            //(6) si la longueur = WORD_LEN (li hiya 6) → ajouter au dictionnaire
             dictionary[dict_size++] = strdup(buf);
     }
     fclose(f);
-    return dict_size;
+    return dict_size; //(7) retour : nombre de mots lus
 }
-
+// Vérifie si un mot existe dans le dictionnaire
 bool is_valid_word(const char *w)
 {
     for (int i = 0; i < dict_size; i++)
@@ -53,6 +68,7 @@ void free_dictionary()
 {
     if (!dictionary)
         return;
+    //Libère la mémoire :
     for (int i = 0; i < dict_size; i++)
         free(dictionary[i]);
     free(dictionary);
@@ -61,13 +77,18 @@ void free_dictionary()
 }
 
 /* ---------------- Feedback ---------------- */
+//Calcule les couleurs Wordle.
 void compute_feedback(const char *guess, const char *target, Color colors[])
 {
+    //Étapes :
+       //(1) initialiser compteur des lettres
     int count[26] = {0};
     for (int i = 0; i < WORD_LEN; i++)
+       // (2) mettre tout en GRAY (hadi kima 7abito diroha kayen bzf les methode machi obliger kima ana)
         colors[i] = GRAY;
     for (int i = 0; i < WORD_LEN; i++)
     {
+        //(3) première passe : GREEN + compter lettres restantes
         if (guess[i] == target[i])
             colors[i] = GREEN;
         else
@@ -80,6 +101,7 @@ void compute_feedback(const char *guess, const char *target, Color colors[])
         int idx = guess[i] - 'a';
         if (count[idx] > 0)
         {
+            //(4) seconde passe : YELLOW
             colors[i] = YELLOW;
             count[idx]--;
         }
@@ -87,11 +109,12 @@ void compute_feedback(const char *guess, const char *target, Color colors[])
             colors[i] = GRAY;
     }
 }
-
+//Affiche les couleurs
 void print_feedback(const char *guess, Color colors[])
 {
     for (int i = 0; i < WORD_LEN; i++)
     {
+        //had les code lazem tefhmohom kifah 7ata dernahom
         printf("[");
         if (colors[i] == GREEN)
             printf("\x1b[42m\x1b[30m%c\x1b[0m", toupper(guess[i]));
@@ -106,15 +129,19 @@ void print_feedback(const char *guess, Color colors[])
 
 /* ---------------- Solveur logique anglais corrigé ---------------- */
 int solver_user_feedback()
+//Le solveur logique basé sur vos retours g/y/b
 {
-    bool used_words[MAX_WORDS] = {0};
-    int min_count[26] = {0}; // lettres obligatoires
-    int max_count[26];       // lettres max autorisées
-    bool correct_pos[WORD_LEN][26] = {0};
-    bool wrong_pos[WORD_LEN][26] = {0};
-
+  bool used_words[MAX_WORDS];      // mots déjà utilisés
+  int min_count[26];               // lettres obligatoires
+  int max_count[26];               // lettres max autorisées
+  bool correct_pos[WORD_LEN][26];  // lettres interdites/obligatoires par position
+  bool wrong_pos[WORD_LEN][26];
+    
+  //(1) initialisation
     for (int i = 0; i < 26; i++)
         max_count[i] = WORD_LEN;
+    
+    //(2) pour chaque essai (1 → 6) iL cherche le meilleur mot dans le dictionnaire.
 
     char guesses_history[MAX_GUESSES][WORD_LEN + 1];
     char feedback_history[MAX_GUESSES][WORD_LEN + 1];
