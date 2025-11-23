@@ -14,6 +14,7 @@
 //time.h : initialisation du hasard
 //wordle.h : contient WORD_LEN, MAX_WORDS, enum Color…
 
+
 char **dictionary = NULL; //dictionary : tableau dynamique de mots → char*
 int dict_size = 0; //dict_size : nombre de mots chargés
 
@@ -77,6 +78,8 @@ void free_dictionary()
 }
 
 /* ---------------- Feedback ---------------- */
+
+//feedback = les couleurs que le jeu te renvoie après chaque essai pour te dire si les lettres sont correctes ou non
 //Calcule les couleurs Wordle.
 void compute_feedback(const char *guess, const char *target, Color colors[])
 {
@@ -325,8 +328,9 @@ void human_play()
  
     char guess[64];  //Ici, le programme doit lire un mot tapé par l’utilisateur au clavier. Ce mot doit bien aller quelque part on le met dans un buffer, un buffer est une zone mémoire temporaire où l’on stocke des données avant de les utiliser..
                      //Déclare un tableau de 64 caractères, c’est-à-dire un espace mémoire où enregistrer jusqu’à 63 lettres. Ce tableau s’appelle guess (ana khiyerto asemo guess t9dri tsemiha kima 7abiti)
-
-       // Indication pour joueur
+                     // dert 64 Pour éviter un overflow (un dépassement de mémoire).
+      
+ // Indication pour joueur
     printf("\nDevinez le mot (%d lettres)\n", WORD_LEN);
 
        // Boucle des 6 essais
@@ -362,50 +366,88 @@ void human_play()
             t--;
             continue;
         }
+
+     // Calcul du feedback
         Color c[WORD_LEN];
         compute_feedback(guess, target, c);
+
+     // Affichage du feedback
         print_feedback(guess, c);
+
+     // Vérifier victoire
         if (strcmp(guess, target) == 0)
         {
             printf("Bravo ! Trouvé en %d essais !\n", t);
             return;
         }
     }
+ 
+ // Si tous les essais ratés
     printf("Perdu ! Mot = %s\n", target);
 }
 
 /* ---------------- MAIN ---------------- */
-int main(int argc, char **argv)
+int main(int argc, char **argv) //argc c'est le nombre d’arguments passés au programme (y compris le nom du programme).
+                                // argv c'est le tableau de chaînes contenant ces arguments.
+// hado dakhlin f l'execution ta3 wech fahmtkom ki ykono 3ndna bzf les fichier w n7awso n'executiwhom ga3 kifkif nektbohom m3a ba3dahom f terminal
+// liko l'exemple hada:
+
+           // ./wordle words.txt   (hadi comonde ta3 execution fel t erminal ta3 vs code)
+                //argc =           (ch7al 3ndk men fichier 7abo yedkhul fel l'execution)
+                     //argv[0] = "./wordle"     (hada lewel)
+                     //argv[1] = "words.txt"      (hada 2éme)
+
+// hna ca depen ch7al 3ndk men fichier tes7a9o ida kan 3ndk 3 teketbihom brk fel terminal nrml wel code ydeber raso w ysetefhom f argv[]
+
 {
+
+ // Vérifier la présence du fichier dictionnaire words.txt
     if (argc < 2)
     {
         printf("Usage: %s <words.txt>\n", argv[0]);
+     // Si l’utilisateur n’a pas donné de fichier, le programme affiche comment l’utiliser et quitte avec code d’erreur 1.
         return 1;
     }
-    int loaded = load_dictionary(argv[1]);
-    if (loaded <= 0)
+ 
+ // Charger le dictionnaire (y3awed y3ayet ll fonction ta3 load_dictionary lewla li dernaha
+    int loaded = load_dictionary(argv[1]); // lit tous les mots du fichier fourni (fichier 1 houwa words.txt dictionary)
+ 
+ // // ida mal9a walo (fichier faragh) ydir échec, on quitte.
+ if (loaded <= 0) 
     {
         printf("Dictionnaire vide ou erreur\n");
         return 1;
     }
-    printf("%d mots chargés (%d lettres)\n", loaded, WORD_LEN);
 
+ // affiche combien de mots ont été chargés et la longueur des mots (WORD_LEN).
+    printf("%d mots chargés (%d lettres)\n", loaded, WORD_LEN); 
+ //%d ch7al kayen men mot 
+ // (%d lettres) ch7al kayen men lettre fel mot (6)
+
+ // Initialiser le générateur de nombres aléatoires
     srand((unsigned)time(NULL));
-
-    while (1)
+ // Permet de choisir un mot au hasard pour le mode joueur humain (human_play).
+// time(NULL) retourne le temps actuel → sert comme graine pour rand().
+ 
+   // Boucle du menu principal
+ while (1)  //Boucle infinie → le menu restera affiché jusqu’à ce que l’utilisateur choisisse de quitter.
     {
+     
+     // Afficher le menu
         printf("\n------- Bienvenue dans Wordle Solver anglais -------\n");
         printf("1. Jouer\n2. Solveur logique corrigé\n3. Quitter\n");
         printf("Votre choix : ");
 
+     // Lire le choix utilisateur
         int ch;
         if (scanf("%d", &ch) != 1)
         {
-            while (getchar() != '\n')
+            while (getchar() != '\n') //Si lecture impossible (!=1) → on vide le buffer (while(getchar()!='\n')) pour éviter les mauvaises saisies et recommence (continue).
                 ;
             continue;
         }
 
+     // Traiter le choix
         if (ch == 1)
             human_play();
         else if (ch == 2)
@@ -416,6 +458,8 @@ int main(int argc, char **argv)
             printf("Choix invalide\n");
     }
 
+ // Libérer la mémoire du dictionnaire
     free_dictionary();
-    return 0;
+ 
+    return 0; //indique que le programme s’est terminé avec succès
 }
