@@ -127,46 +127,61 @@ void print_feedback(const char *guess, Color colors[])
     printf("\n");
 }
 
-/* ---------------- Solveur logique anglais corrigé ---------------- */
+/* ---------------- Solveur logique ---------------- */
 int solver_user_feedback()
 //Le solveur logique basé sur vos retours g/y/b
 {
-  bool used_words[MAX_WORDS];      // mots déjà utilisés
-  int min_count[26];               // lettres obligatoires
-  int max_count[26];               // lettres max autorisées
-  bool correct_pos[WORD_LEN][26];  // lettres interdites/obligatoires par position
-  bool wrong_pos[WORD_LEN][26];
+  bool used_words[MAX_WORDS];      // tableau qui indique si un mot du dictionnaire a déjà été utilisé comme essai.
+  int min_count[26];               // pour chaque lettre (‘a’ à ‘z’), combien de fois minimum elle doit apparaître dans la solution.
+  int max_count[26];               // combien de fois maximum elle peut apparaître.
+  bool correct_pos[WORD_LEN][26];  // correct_pos[i][c] = true → la lettre c est obligatoire à la position i
+  bool wrong_pos[WORD_LEN][26];    //wrong_pos[i][c] = true → la lettre c est interdite à la position i
     
-  //(1) initialisation
+  //initialisation
     for (int i = 0; i < 26; i++)
         max_count[i] = WORD_LEN;
     
-    //(2) pour chaque essai (1 → 6) iL cherche le meilleur mot dans le dictionnaire.
+    //Historique des essais Pour afficher un résumé à la fin.
 
     char guesses_history[MAX_GUESSES][WORD_LEN + 1];
     char feedback_history[MAX_GUESSES][WORD_LEN + 1];
     int history_count = 0;
-
+ 
+    //Introduction
     printf("\n--- SOLVEUR LOGIQUE WORDLE (anglais) ---\n");
     printf("Feedback: g=vert, y=jaune, b=gris\n");
-
+   //Le solveur jouera au maximum MAX_GUESSES li houwa 6 fois.
     for (int turn = 1; turn <= MAX_GUESSES; turn++)
     {
-        int best_idx = -1;
-        int best_score = -1;
-
+        int best_idx = -1;  // index du meilleur mot trouvé dans le dictionnaire.
+        int best_score = -1;  //score de ce mot
+     
+       //tester tous les mots possibles.
         for (int i = 0; i < dict_size; i++)
         {
+         
+         //Ne pas réutiliser un mot
             if (used_words[i])
                 continue;
+         
+         //Pointer sur le mot courant
             char *w = dictionary[i];
+         
+         //Valide = oui au début
             bool valid = true;
+         
+         // compte combien de fois chaque lettre apparaît dans le mot testé.
             int count_letter[26] = {0};
 
+         //Boucle sur les lettres du mot
             for (int j = 0; j < WORD_LEN; j++)
             {
-                int c = w[j] - 'a';
-                count_letter[c]++;
+                int c = w[j] - 'a';   //c = lettre entre 0 et 25  (bin 0 w 25 machi 26 ya3ni A = 0 w B = 1)
+               
+             //Incrémenter compteur de lettres
+             count_letter[c]++;
+             
+             //Tester position interdite Si une lettre est interdite à cette position → mot invalide.
                 if (wrong_pos[j][c])
                 {
                     valid = false;
